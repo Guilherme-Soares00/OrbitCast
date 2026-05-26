@@ -1,8 +1,8 @@
 # OrbitCast API
 
-Backend da solucao **OrbitCast** para a Global Solution 2026/1.
+Backend da solução **OrbitCast**.
 
-O OrbitCast e uma plataforma de planejamento e simulacao de transmissoes via satelite para regioes remotas ou com baixa conectividade. A API permite cadastrar clientes, canais, regioes, campanhas, associar regioes a campanhas e gerar simulacoes de custo, alcance, qualidade de sinal e viabilidade.
+O OrbitCast é uma plataforma de planejamento e simulação de transmissões via satélite para regiões remotas ou com baixa conectividade. A API permite cadastrar clientes, canais, regiões, campanhas, associar regiões a campanhas e gerar simulações de custo, alcance, qualidade de sinal e viabilidade.
 
 ## Equipe
 
@@ -19,15 +19,15 @@ Turma: 1TDSPB
 - Quarkus 3.35.4
 - Jakarta REST
 - JDBC manual
-- H2 em memoria para desenvolvimento local
+- H2 em memória para desenvolvimento local
 - Maven
 
 ## Camadas
 
-- `entities`: classes de dominio.
-- `connection`: conexao e inicializacao do banco.
+- `entities`: classes de domínio.
+- `connection`: conexão e inicialização do banco.
 - `dao`: acesso JDBC ao banco.
-- `bo`: regras de negocio e validacoes.
+- `bo`: regras de negócio e validações.
 - `controllers`: endpoints REST.
 - `exceptions`: tratamento padronizado de erros.
 
@@ -37,7 +37,7 @@ Turma: 1TDSPB
 mvn quarkus:dev
 ```
 
-A API fica disponivel em:
+A API fica disponível em:
 
 ```text
 http://localhost:8080
@@ -51,7 +51,7 @@ GET /health
 
 ## Banco Local
 
-O banco H2 em memoria e inicializado automaticamente ao subir a aplicacao.
+O banco H2 em memória é inicializado automaticamente ao subir a aplicação.
 
 Scripts:
 
@@ -80,7 +80,7 @@ Contrato detalhado com exemplos para o front-end:
 - `PUT /canais/{id}`
 - `DELETE /canais/{id}`
 
-### Regioes
+### Regiões
 
 - `GET /regioes`
 - `GET /regioes/{id}`
@@ -99,7 +99,7 @@ Contrato detalhado com exemplos para o front-end:
 - `POST /campanhas/{id}/regioes/{regiaoId}`
 - `DELETE /campanhas/{id}/regioes/{regiaoId}`
 
-### Simulacoes
+### Simulações
 
 - `GET /simulacoes`
 - `GET /simulacoes/{id}`
@@ -110,7 +110,7 @@ Contrato detalhado com exemplos para o front-end:
 
 - `GET /dashboard/resumo`
 
-## Exemplo De Simulacao
+## Exemplo De Simulação
 
 ```shell
 curl -X POST http://localhost:8080/campanhas/1/simulacoes

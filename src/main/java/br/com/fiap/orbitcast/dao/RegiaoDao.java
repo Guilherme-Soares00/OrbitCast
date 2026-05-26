@@ -9,7 +9,6 @@ import jakarta.inject.Inject;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -79,7 +78,7 @@ public class RegiaoDao {
                 """;
 
         try (Connection connection = databaseConnection.getConnection();
-             PreparedStatement statement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+             PreparedStatement statement = connection.prepareStatement(sql, new String[]{"id"})) {
             statement.setString(1, regiao.getNome());
             statement.setString(2, regiao.getEstado());
             statement.setString(3, regiao.getPais());
@@ -90,6 +89,7 @@ public class RegiaoDao {
             statement.setBigDecimal(8, regiao.getAreaKm2());
             statement.setObject(9, regiao.getPrioridadeSocial());
             statement.executeUpdate();
+            databaseConnection.commit(connection);
 
             try (ResultSet keys = statement.getGeneratedKeys()) {
                 if (keys.next()) {
@@ -124,7 +124,9 @@ public class RegiaoDao {
             statement.setBigDecimal(8, regiao.getAreaKm2());
             statement.setObject(9, regiao.getPrioridadeSocial());
             statement.setLong(10, id);
-            return statement.executeUpdate() > 0;
+            boolean atualizado = statement.executeUpdate() > 0;
+            databaseConnection.commit(connection);
+            return atualizado;
         } catch (Exception exception) {
             throw new DataAccessException("Erro ao atualizar regiao.", exception);
         }
@@ -136,7 +138,9 @@ public class RegiaoDao {
         try (Connection connection = databaseConnection.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setLong(1, id);
-            return statement.executeUpdate() > 0;
+            boolean removido = statement.executeUpdate() > 0;
+            databaseConnection.commit(connection);
+            return removido;
         } catch (Exception exception) {
             throw new DataAccessException("Erro ao remover regiao.", exception);
         }

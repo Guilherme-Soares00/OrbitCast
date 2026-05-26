@@ -14,6 +14,14 @@ public class DatabaseConnection {
     AgroalDataSource dataSource;
 
     public Connection getConnection() throws SQLException {
-        return dataSource.getConnection();
+        Connection connection = dataSource.getConnection();
+        connection.setAutoCommit(true);
+        return connection;
+    }
+
+    public void commit(Connection connection) throws SQLException {
+        if (!connection.getAutoCommit()) {
+            connection.commit();
+        }
     }
 }

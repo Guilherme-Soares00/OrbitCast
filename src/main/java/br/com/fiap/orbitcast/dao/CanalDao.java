@@ -9,7 +9,6 @@ import jakarta.inject.Inject;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -77,7 +76,7 @@ public class CanalDao {
                 """;
 
         try (Connection connection = databaseConnection.getConnection();
-             PreparedStatement statement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+             PreparedStatement statement = connection.prepareStatement(sql, new String[]{"id"})) {
             canal.setAtivo(canal.getAtivo() == null ? Boolean.TRUE : canal.getAtivo());
 
             statement.setLong(1, canal.getClienteId());
@@ -87,6 +86,7 @@ public class CanalDao {
             statement.setString(5, canal.getClassificacaoIndicativa());
             statement.setBoolean(6, canal.getAtivo());
             statement.executeUpdate();
+            databaseConnection.commit(connection);
 
             try (ResultSet keys = statement.getGeneratedKeys()) {
                 if (keys.next()) {
@@ -117,7 +117,9 @@ public class CanalDao {
             statement.setString(5, canal.getClassificacaoIndicativa());
             statement.setBoolean(6, canal.getAtivo() == null || canal.getAtivo());
             statement.setLong(7, id);
-            return statement.executeUpdate() > 0;
+            boolean atualizado = statement.executeUpdate() > 0;
+            databaseConnection.commit(connection);
+            return atualizado;
         } catch (Exception exception) {
             throw new DataAccessException("Erro ao atualizar canal.", exception);
         }
@@ -129,7 +131,9 @@ public class CanalDao {
         try (Connection connection = databaseConnection.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setLong(1, id);
-            return statement.executeUpdate() > 0;
+            boolean removido = statement.executeUpdate() > 0;
+            databaseConnection.commit(connection);
+            return removido;
         } catch (Exception exception) {
             throw new DataAccessException("Erro ao remover canal.", exception);
         }

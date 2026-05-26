@@ -12,7 +12,6 @@ import java.sql.Connection;
 import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -82,7 +81,7 @@ public class CampanhaTransmissaoDao {
                 """;
 
         try (Connection connection = databaseConnection.getConnection();
-             PreparedStatement statement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+             PreparedStatement statement = connection.prepareStatement(sql, new String[]{"id"})) {
             campanha.setStatus(campanha.getStatus() == null ? "PLANEJADA" : campanha.getStatus());
 
             statement.setLong(1, campanha.getClienteId());
@@ -96,6 +95,7 @@ public class CampanhaTransmissaoDao {
             statement.setBigDecimal(9, campanha.getOrcamento());
             statement.setString(10, campanha.getStatus());
             statement.executeUpdate();
+            databaseConnection.commit(connection);
 
             try (ResultSet keys = statement.getGeneratedKeys()) {
                 if (keys.next()) {
@@ -131,7 +131,9 @@ public class CampanhaTransmissaoDao {
             statement.setBigDecimal(9, campanha.getOrcamento());
             statement.setString(10, campanha.getStatus());
             statement.setLong(11, id);
-            return statement.executeUpdate() > 0;
+            boolean atualizado = statement.executeUpdate() > 0;
+            databaseConnection.commit(connection);
+            return atualizado;
         } catch (Exception exception) {
             throw new DataAccessException("Erro ao atualizar campanha.", exception);
         }
@@ -143,7 +145,9 @@ public class CampanhaTransmissaoDao {
         try (Connection connection = databaseConnection.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setLong(1, id);
-            return statement.executeUpdate() > 0;
+            boolean removido = statement.executeUpdate() > 0;
+            databaseConnection.commit(connection);
+            return removido;
         } catch (Exception exception) {
             throw new DataAccessException("Erro ao remover campanha.", exception);
         }
@@ -162,6 +166,7 @@ public class CampanhaTransmissaoDao {
             statement.setInt(3, campanhaRegiao.getPrioridade());
             statement.setString(4, campanhaRegiao.getObservacao());
             statement.executeUpdate();
+            databaseConnection.commit(connection);
         } catch (Exception exception) {
             throw new DataAccessException("Erro ao associar regiao a campanha.", exception);
         }
@@ -171,10 +176,12 @@ public class CampanhaTransmissaoDao {
         String sql = "DELETE FROM campanha_regiao WHERE campanha_id = ? AND regiao_id = ?";
 
         try (Connection connection = databaseConnection.getConnection();
-             PreparedStatement statement = connection.prepareStatement(sql)) {
+            PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setLong(1, campanhaId);
             statement.setLong(2, regiaoId);
-            return statement.executeUpdate() > 0;
+            boolean removido = statement.executeUpdate() > 0;
+            databaseConnection.commit(connection);
+            return removido;
         } catch (Exception exception) {
             throw new DataAccessException("Erro ao remover regiao da campanha.", exception);
         }

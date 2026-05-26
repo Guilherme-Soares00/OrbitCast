@@ -4,6 +4,7 @@ import io.quarkus.runtime.StartupEvent;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
 import jakarta.inject.Inject;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import java.io.BufferedReader;
 import java.io.InputStream;
@@ -19,9 +20,22 @@ public class DatabaseInitializer {
     @Inject
     DatabaseConnection databaseConnection;
 
+    @ConfigProperty(name = "orbitcast.database.initialize", defaultValue = "true")
+    boolean initializeDatabase;
+
+    @ConfigProperty(name = "orbitcast.database.schema", defaultValue = "db/schema.sql")
+    String schemaScriptPath;
+
+    @ConfigProperty(name = "orbitcast.database.data", defaultValue = "db/data.sql")
+    String dataScriptPath;
+
     void onStart(@Observes StartupEvent event) {
-        executeSql("db/schema.sql");
-        executeSql("db/data.sql");
+        if (!initializeDatabase) {
+            return;
+        }
+
+        executeSql(schemaScriptPath);
+        executeSql(dataScriptPath);
     }
 
     private void executeSql(String resourcePath) {

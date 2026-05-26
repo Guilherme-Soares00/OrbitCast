@@ -9,7 +9,6 @@ import jakarta.inject.Inject;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.Statement;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -79,7 +78,7 @@ public class ClienteDao {
                 """;
 
         try (Connection connection = databaseConnection.getConnection();
-             PreparedStatement statement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+             PreparedStatement statement = connection.prepareStatement(sql, new String[]{"id"})) {
             cliente.setDataCadastro(cliente.getDataCadastro() == null ? LocalDateTime.now() : cliente.getDataCadastro());
             cliente.setAtivo(cliente.getAtivo() == null ? Boolean.TRUE : cliente.getAtivo());
 
@@ -91,6 +90,7 @@ public class ClienteDao {
             statement.setTimestamp(6, Timestamp.valueOf(cliente.getDataCadastro()));
             statement.setBoolean(7, cliente.getAtivo());
             statement.executeUpdate();
+            databaseConnection.commit(connection);
 
             try (ResultSet keys = statement.getGeneratedKeys()) {
                 if (keys.next()) {
@@ -120,7 +120,9 @@ public class ClienteDao {
             statement.setString(5, cliente.getSegmento());
             statement.setBoolean(6, cliente.getAtivo() == null || cliente.getAtivo());
             statement.setLong(7, id);
-            return statement.executeUpdate() > 0;
+            boolean atualizado = statement.executeUpdate() > 0;
+            databaseConnection.commit(connection);
+            return atualizado;
         } catch (Exception exception) {
             throw new DataAccessException("Erro ao atualizar cliente.", exception);
         }
@@ -132,7 +134,9 @@ public class ClienteDao {
         try (Connection connection = databaseConnection.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setLong(1, id);
-            return statement.executeUpdate() > 0;
+            boolean removido = statement.executeUpdate() > 0;
+            databaseConnection.commit(connection);
+            return removido;
         } catch (Exception exception) {
             throw new DataAccessException("Erro ao remover cliente.", exception);
         }

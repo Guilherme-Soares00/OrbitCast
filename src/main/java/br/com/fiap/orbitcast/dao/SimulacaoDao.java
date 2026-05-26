@@ -9,7 +9,6 @@ import jakarta.inject.Inject;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.Statement;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -85,7 +84,7 @@ public class SimulacaoDao {
                 """;
 
         try (Connection connection = databaseConnection.getConnection();
-             PreparedStatement statement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+             PreparedStatement statement = connection.prepareStatement(sql, new String[]{"id"})) {
             simulacao.setDataSimulacao(simulacao.getDataSimulacao() == null ? LocalDateTime.now() : simulacao.getDataSimulacao());
 
             statement.setLong(1, simulacao.getCampanhaId());
@@ -96,6 +95,7 @@ public class SimulacaoDao {
             statement.setString(6, simulacao.getRecomendacao());
             statement.setTimestamp(7, Timestamp.valueOf(simulacao.getDataSimulacao()));
             statement.executeUpdate();
+            databaseConnection.commit(connection);
 
             try (ResultSet keys = statement.getGeneratedKeys()) {
                 if (keys.next()) {
