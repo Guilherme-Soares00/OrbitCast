@@ -58,6 +58,29 @@ Scripts:
 - `src/main/resources/db/schema.sql`
 - `src/main/resources/db/data.sql`
 
+## Deploy No Render
+
+Crie um Web Service no Render a partir do repositório do GitHub e selecione runtime Docker. O projeto possui um `Dockerfile` na raiz.
+
+Variáveis de ambiente para usar Oracle:
+
+```text
+QUARKUS_PROFILE=oracle
+ORACLE_JDBC_URL=jdbc:oracle:thin:@//host:porta/service_name
+ORACLE_USERNAME=seu_usuario
+ORACLE_PASSWORD=sua_senha
+ORBITCAST_DATABASE_INITIALIZE=false
+```
+
+O banco Oracle precisa estar acessível pela internet para o Render conseguir conectar. Uma URL com `localhost` só funciona na sua máquina, não no servidor do Render.
+
+Depois do deploy, valide:
+
+```text
+GET /health
+GET /dashboard/resumo
+```
+
 ## Endpoints Principais
 
 Contrato detalhado com exemplos para o front-end:
