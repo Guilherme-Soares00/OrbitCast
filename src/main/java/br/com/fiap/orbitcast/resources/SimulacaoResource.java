@@ -1,4 +1,4 @@
-package br.com.fiap.orbitcast.controllers;
+package br.com.fiap.orbitcast.resources;
 
 import br.com.fiap.orbitcast.bo.SimulacaoBo;
 import jakarta.inject.Inject;
@@ -11,7 +11,7 @@ import jakarta.ws.rs.core.Response;
 
 @Path("/simulacoes")
 @Produces(MediaType.APPLICATION_JSON)
-public class SimulacaoController {
+public class SimulacaoResource {
 
     @Inject
     SimulacaoBo simulacaoBo;

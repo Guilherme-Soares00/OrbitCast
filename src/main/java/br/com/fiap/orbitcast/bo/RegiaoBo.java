@@ -21,53 +21,79 @@ public class RegiaoBo {
     }
 
     public Regiao buscarPorId(Long id) {
-        return regiaoDao.buscarPorId(id)
+        Long regiaoId = ValidationUtils.requirePositiveId(id, "Id da regiao deve ser positivo.");
+        return regiaoDao.buscarPorId(regiaoId)
                 .orElseThrow(() -> new EntityNotFoundException("Regiao nao encontrada."));
     }
 
     public Regiao cadastrar(Regiao regiao) {
-        validar(regiao);
+        validar(regiao, null);
         return regiaoDao.inserir(regiao);
     }
 
     public Regiao atualizar(Long id, Regiao regiao) {
-        validar(regiao);
-        if (!regiaoDao.atualizar(id, regiao)) {
+        Long regiaoId = ValidationUtils.requirePositiveId(id, "Id da regiao deve ser positivo.");
+        if (!regiaoDao.existe(regiaoId)) {
             throw new EntityNotFoundException("Regiao nao encontrada.");
         }
-        return buscarPorId(id);
+        validar(regiao, regiaoId);
+        regiaoDao.atualizar(regiaoId, regiao);
+        return buscarPorId(regiaoId);
     }
 
     public void remover(Long id) {
-        if (!regiaoDao.remover(id)) {
+        Long regiaoId = ValidationUtils.requirePositiveId(id, "Id da regiao deve ser positivo.");
+        if (!regiaoDao.existe(regiaoId)) {
             throw new EntityNotFoundException("Regiao nao encontrada.");
         }
+        if (regiaoDao.estaAssociadaCampanha(regiaoId)) {
+            throw new BusinessException("Regiao possui campanhas vinculadas.");
+        }
+        regiaoDao.remover(regiaoId);
     }
 
-    private void validar(Regiao regiao) {
+    private void validar(Regiao regiao, Long idIgnorado) {
         if (regiao == null) {
             throw new BusinessException("Regiao deve ser informada.");
         }
-        if (isBlank(regiao.getNome())) {
-            throw new BusinessException("Nome da regiao e obrigatorio.");
-        }
-        if (regiao.getPopulacaoEstimada() == null || regiao.getPopulacaoEstimada() < 0) {
-            throw new BusinessException("Populacao estimada deve ser maior ou igual a zero.");
-        }
-        if (regiao.getIndiceConectividade() == null
-                || regiao.getIndiceConectividade().compareTo(BigDecimal.ZERO) < 0
-                || regiao.getIndiceConectividade().compareTo(BigDecimal.valueOf(100)) > 0) {
-            throw new BusinessException("Indice de conectividade deve ficar entre 0 e 100.");
-        }
-        if (regiao.getPrioridadeSocial() == null || regiao.getPrioridadeSocial() < 1 || regiao.getPrioridadeSocial() > 5) {
-            throw new BusinessException("Prioridade social deve ficar entre 1 e 5.");
-        }
-        if (regiao.getAreaKm2() == null || regiao.getAreaKm2().compareTo(BigDecimal.ZERO) <= 0) {
-            throw new BusinessException("Area em km2 deve ser maior que zero.");
+        regiao.setNome(ValidationUtils.requireText(regiao.getNome(), "Nome da regiao", 120));
+        regiao.setEstado(normalizarEstado(regiao.getEstado()));
+        regiao.setPais(ValidationUtils.requireText(regiao.getPais(), "Pais", 80));
+        validarCoordenadas(regiao);
+        validarNumeros(regiao);
+
+        if (regiaoDao.nomeEstadoPaisExiste(regiao.getNome(), regiao.getEstado(), regiao.getPais(), idIgnorado)) {
+            throw new BusinessException("Regiao ja cadastrada para este estado e pais.");
         }
     }
 
-    private boolean isBlank(String value) {
-        return value == null || value.isBlank();
+    private String normalizarEstado(String estado) {
+        String valor = ValidationUtils.requireText(estado, "Estado", 2).toUpperCase();
+        if (!valor.matches("[A-Z]{2}")) {
+            throw new BusinessException("Estado deve conter a sigla com duas letras.");
+        }
+        return valor;
+    }
+
+    private void validarCoordenadas(Regiao regiao) {
+        if ((regiao.getLatitude() == null && regiao.getLongitude() != null)
+                || (regiao.getLatitude() != null && regiao.getLongitude() == null)) {
+            throw new BusinessException("Latitude e longitude devem ser informadas em conjunto.");
+        }
+        if (regiao.getLatitude() != null) {
+            ValidationUtils.requireBetween(regiao.getLatitude(), "Latitude", BigDecimal.valueOf(-90), BigDecimal.valueOf(90));
+        }
+        if (regiao.getLongitude() != null) {
+            ValidationUtils.requireBetween(regiao.getLongitude(), "Longitude", BigDecimal.valueOf(-180), BigDecimal.valueOf(180));
+        }
+    }
+
+    private void validarNumeros(Regiao regiao) {
+        if (regiao.getPopulacaoEstimada() == null || regiao.getPopulacaoEstimada() < 0) {
+            throw new BusinessException("Populacao estimada deve ser maior ou igual a zero.");
+        }
+        ValidationUtils.requireBetween(regiao.getIndiceConectividade(), "Indice de conectividade", BigDecimal.ZERO, BigDecimal.valueOf(100));
+        ValidationUtils.requireBetween(regiao.getPrioridadeSocial(), "Prioridade social", 1, 5);
+        ValidationUtils.requirePositive(regiao.getAreaKm2(), "Area em km2");
     }
 }

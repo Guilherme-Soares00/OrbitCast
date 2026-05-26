@@ -28,7 +28,7 @@ Turma: 1TDSPB
 - `connection`: conexão e inicialização do banco.
 - `dao`: acesso JDBC ao banco.
 - `bo`: regras de negócio e validações.
-- `controllers`: endpoints REST.
+- `resources`: endpoints REST.
 - `exceptions`: tratamento padronizado de erros.
 
 ## Rodando Localmente
@@ -98,6 +98,7 @@ Contrato detalhado com exemplos para o front-end:
 - `GET /campanhas/{id}/regioes`
 - `POST /campanhas/{id}/regioes/{regiaoId}`
 - `DELETE /campanhas/{id}/regioes/{regiaoId}`
+- `GET /campanhas/{id}/planos-cobertura`
 
 ### Simulações
 
@@ -105,6 +106,14 @@ Contrato detalhado com exemplos para o front-end:
 - `GET /simulacoes/{id}`
 - `GET /campanhas/{id}/simulacoes`
 - `POST /campanhas/{id}/simulacoes`
+
+### Planos De Cobertura
+
+- `GET /planos-cobertura`
+- `GET /planos-cobertura/{id}`
+- `POST /planos-cobertura`
+- `PUT /planos-cobertura/{id}`
+- `DELETE /planos-cobertura/{id}`
 
 ### Dashboard
 

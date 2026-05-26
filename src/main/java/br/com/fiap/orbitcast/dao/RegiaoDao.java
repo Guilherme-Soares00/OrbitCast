@@ -69,6 +69,50 @@ public class RegiaoDao {
         }
     }
 
+    public boolean nomeEstadoPaisExiste(String nome, String estado, String pais, Long idIgnorado) {
+        String sql = """
+                SELECT COUNT(*) total
+                  FROM regioes
+                 WHERE LOWER(nome) = LOWER(?)
+                   AND estado = ?
+                   AND LOWER(pais) = LOWER(?)
+                """
+                + (idIgnorado == null ? "" : " AND id <> ?");
+
+        try (Connection connection = databaseConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setString(1, nome);
+            statement.setString(2, estado);
+            statement.setString(3, pais);
+            if (idIgnorado != null) {
+                statement.setLong(4, idIgnorado);
+            }
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                resultSet.next();
+                return resultSet.getInt("total") > 0;
+            }
+        } catch (Exception exception) {
+            throw new DataAccessException("Erro ao verificar regiao duplicada.", exception);
+        }
+    }
+
+    public boolean estaAssociadaCampanha(Long id) {
+        String sql = "SELECT COUNT(*) total FROM campanha_regiao WHERE regiao_id = ?";
+
+        try (Connection connection = databaseConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setLong(1, id);
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                resultSet.next();
+                return resultSet.getInt("total") > 0;
+            }
+        } catch (Exception exception) {
+            throw new DataAccessException("Erro ao verificar campanhas da regiao.", exception);
+        }
+    }
+
     public Regiao inserir(Regiao regiao) {
         String sql = """
                 INSERT INTO regioes

@@ -72,6 +72,16 @@ public class CampanhaTransmissaoDao {
         }
     }
 
+    public boolean existePorCanal(Long canalId) {
+        String sql = "SELECT COUNT(*) total FROM campanhas_transmissao WHERE canal_id = ?";
+        return existeVinculo(sql, canalId, "Erro ao verificar campanhas do canal.");
+    }
+
+    public boolean possuiRegioes(Long campanhaId) {
+        String sql = "SELECT COUNT(*) total FROM campanha_regiao WHERE campanha_id = ?";
+        return existeVinculo(sql, campanhaId, "Erro ao verificar regioes da campanha.");
+    }
+
     public CampanhaTransmissao inserir(CampanhaTransmissao campanha) {
         String sql = """
                 INSERT INTO campanhas_transmissao
@@ -259,5 +269,19 @@ public class CampanhaTransmissaoDao {
                 resultSet.getBigDecimal("area_km2"),
                 resultSet.getInt("prioridade_social")
         );
+    }
+
+    private boolean existeVinculo(String sql, Long id, String mensagemErro) {
+        try (Connection connection = databaseConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setLong(1, id);
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                resultSet.next();
+                return resultSet.getInt("total") > 0;
+            }
+        } catch (Exception exception) {
+            throw new DataAccessException(mensagemErro, exception);
+        }
     }
 }

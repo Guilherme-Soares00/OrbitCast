@@ -1,7 +1,7 @@
 package br.com.fiap.orbitcast.dao;
 
 import br.com.fiap.orbitcast.connection.DatabaseConnection;
-import br.com.fiap.orbitcast.entities.Canal;
+import br.com.fiap.orbitcast.entities.PlanoCobertura;
 import br.com.fiap.orbitcast.exceptions.DataAccessException;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -14,29 +14,29 @@ import java.util.List;
 import java.util.Optional;
 
 @ApplicationScoped
-public class CanalDao {
+public class PlanoCoberturaDao {
 
     @Inject
     DatabaseConnection databaseConnection;
 
-    public List<Canal> listar() {
-        String sql = "SELECT * FROM canais ORDER BY id";
-        List<Canal> canais = new ArrayList<>();
+    public List<PlanoCobertura> listar() {
+        String sql = "SELECT * FROM planos_cobertura ORDER BY id";
+        List<PlanoCobertura> planos = new ArrayList<>();
 
         try (Connection connection = databaseConnection.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql);
              ResultSet resultSet = statement.executeQuery()) {
             while (resultSet.next()) {
-                canais.add(mapear(resultSet));
+                planos.add(mapear(resultSet));
             }
-            return canais;
+            return planos;
         } catch (Exception exception) {
-            throw new DataAccessException("Erro ao listar canais.", exception);
+            throw new DataAccessException("Erro ao listar planos de cobertura.", exception);
         }
     }
 
-    public Optional<Canal> buscarPorId(Long id) {
-        String sql = "SELECT * FROM canais WHERE id = ?";
+    public Optional<PlanoCobertura> buscarPorId(Long id) {
+        String sql = "SELECT * FROM planos_cobertura WHERE id = ?";
 
         try (Connection connection = databaseConnection.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
@@ -49,34 +49,38 @@ public class CanalDao {
                 return Optional.empty();
             }
         } catch (Exception exception) {
-            throw new DataAccessException("Erro ao buscar canal.", exception);
+            throw new DataAccessException("Erro ao buscar plano de cobertura.", exception);
         }
     }
 
-    public boolean existe(Long id) {
-        String sql = "SELECT COUNT(*) total FROM canais WHERE id = ?";
+    public List<PlanoCobertura> listarPorCampanha(Long campanhaId) {
+        String sql = "SELECT * FROM planos_cobertura WHERE campanha_id = ? ORDER BY id";
+        List<PlanoCobertura> planos = new ArrayList<>();
 
         try (Connection connection = databaseConnection.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
-            statement.setLong(1, id);
+            statement.setLong(1, campanhaId);
 
             try (ResultSet resultSet = statement.executeQuery()) {
-                resultSet.next();
-                return resultSet.getInt("total") > 0;
+                while (resultSet.next()) {
+                    planos.add(mapear(resultSet));
+                }
             }
+
+            return planos;
         } catch (Exception exception) {
-            throw new DataAccessException("Erro ao verificar canal.", exception);
+            throw new DataAccessException("Erro ao listar planos da campanha.", exception);
         }
     }
 
-    public boolean nomeExisteParaCliente(String nome, Long clienteId, Long idIgnorado) {
-        String sql = "SELECT COUNT(*) total FROM canais WHERE LOWER(nome) = LOWER(?) AND cliente_id = ?"
+    public boolean nomeExisteParaCampanha(String nome, Long campanhaId, Long idIgnorado) {
+        String sql = "SELECT COUNT(*) total FROM planos_cobertura WHERE LOWER(nome) = LOWER(?) AND campanha_id = ?"
                 + (idIgnorado == null ? "" : " AND id <> ?");
 
         try (Connection connection = databaseConnection.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setString(1, nome);
-            statement.setLong(2, clienteId);
+            statement.setLong(2, campanhaId);
             if (idIgnorado != null) {
                 statement.setLong(3, idIgnorado);
             }
@@ -86,68 +90,67 @@ public class CanalDao {
                 return resultSet.getInt("total") > 0;
             }
         } catch (Exception exception) {
-            throw new DataAccessException("Erro ao verificar nome do canal.", exception);
+            throw new DataAccessException("Erro ao verificar plano duplicado.", exception);
         }
     }
 
-    public Canal inserir(Canal canal) {
+    public PlanoCobertura inserir(PlanoCobertura plano) {
         String sql = """
-                INSERT INTO canais (cliente_id, nome, tipo_conteudo, publico_alvo, classificacao_indicativa, ativo)
+                INSERT INTO planos_cobertura
+                (campanha_id, nome, descricao, custo_total, alcance_total, viabilidade_geral)
                 VALUES (?, ?, ?, ?, ?, ?)
                 """;
 
         try (Connection connection = databaseConnection.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql, new String[]{"id"})) {
-            canal.setAtivo(canal.getAtivo() == null ? Boolean.TRUE : canal.getAtivo());
-
-            statement.setLong(1, canal.getClienteId());
-            statement.setString(2, canal.getNome());
-            statement.setString(3, canal.getTipoConteudo());
-            statement.setString(4, canal.getPublicoAlvo());
-            statement.setString(5, canal.getClassificacaoIndicativa());
-            statement.setBoolean(6, canal.getAtivo());
+            statement.setLong(1, plano.getCampanhaId());
+            statement.setString(2, plano.getNome());
+            statement.setString(3, plano.getDescricao());
+            statement.setBigDecimal(4, plano.getCustoTotal());
+            statement.setInt(5, plano.getAlcanceTotal());
+            statement.setString(6, plano.getViabilidadeGeral());
             statement.executeUpdate();
             databaseConnection.commit(connection);
 
             try (ResultSet keys = statement.getGeneratedKeys()) {
                 if (keys.next()) {
-                    canal.setId(keys.getLong(1));
+                    plano.setId(keys.getLong(1));
                 }
             }
 
-            return canal;
+            return plano;
         } catch (Exception exception) {
-            throw new DataAccessException("Erro ao inserir canal.", exception);
+            throw new DataAccessException("Erro ao inserir plano de cobertura.", exception);
         }
     }
 
-    public boolean atualizar(Long id, Canal canal) {
+    public boolean atualizar(Long id, PlanoCobertura plano) {
         String sql = """
-                UPDATE canais
-                   SET cliente_id = ?, nome = ?, tipo_conteudo = ?, publico_alvo = ?,
-                       classificacao_indicativa = ?, ativo = ?
+                UPDATE planos_cobertura
+                   SET campanha_id = ?, nome = ?, descricao = ?, custo_total = ?,
+                       alcance_total = ?, viabilidade_geral = ?
                  WHERE id = ?
                 """;
 
         try (Connection connection = databaseConnection.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
-            statement.setLong(1, canal.getClienteId());
-            statement.setString(2, canal.getNome());
-            statement.setString(3, canal.getTipoConteudo());
-            statement.setString(4, canal.getPublicoAlvo());
-            statement.setString(5, canal.getClassificacaoIndicativa());
-            statement.setBoolean(6, canal.getAtivo() == null || canal.getAtivo());
+            statement.setLong(1, plano.getCampanhaId());
+            statement.setString(2, plano.getNome());
+            statement.setString(3, plano.getDescricao());
+            statement.setBigDecimal(4, plano.getCustoTotal());
+            statement.setInt(5, plano.getAlcanceTotal());
+            statement.setString(6, plano.getViabilidadeGeral());
             statement.setLong(7, id);
             boolean atualizado = statement.executeUpdate() > 0;
             databaseConnection.commit(connection);
             return atualizado;
         } catch (Exception exception) {
-            throw new DataAccessException("Erro ao atualizar canal.", exception);
+            throw new DataAccessException("Erro ao atualizar plano de cobertura.", exception);
         }
     }
 
     public boolean remover(Long id) {
-        String sql = "DELETE FROM canais WHERE id = ?";
+        String sql = "DELETE FROM planos_cobertura WHERE id = ?";
 
         try (Connection connection = databaseConnection.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
@@ -156,19 +159,19 @@ public class CanalDao {
             databaseConnection.commit(connection);
             return removido;
         } catch (Exception exception) {
-            throw new DataAccessException("Erro ao remover canal.", exception);
+            throw new DataAccessException("Erro ao remover plano de cobertura.", exception);
         }
     }
 
-    private Canal mapear(ResultSet resultSet) throws Exception {
-        return new Canal(
+    private PlanoCobertura mapear(ResultSet resultSet) throws Exception {
+        return new PlanoCobertura(
                 resultSet.getLong("id"),
-                resultSet.getLong("cliente_id"),
+                resultSet.getLong("campanha_id"),
                 resultSet.getString("nome"),
-                resultSet.getString("tipo_conteudo"),
-                resultSet.getString("publico_alvo"),
-                resultSet.getString("classificacao_indicativa"),
-                resultSet.getBoolean("ativo")
+                resultSet.getString("descricao"),
+                resultSet.getBigDecimal("custo_total"),
+                resultSet.getInt("alcance_total"),
+                resultSet.getString("viabilidade_geral")
         );
     }
 }

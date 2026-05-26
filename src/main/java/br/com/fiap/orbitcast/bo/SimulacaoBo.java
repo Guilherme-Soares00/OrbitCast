@@ -29,18 +29,23 @@ public class SimulacaoBo {
     }
 
     public Simulacao buscarPorId(Long id) {
-        return simulacaoDao.buscarPorId(id)
+        Long simulacaoId = ValidationUtils.requirePositiveId(id, "Id da simulacao deve ser positivo.");
+        return simulacaoDao.buscarPorId(simulacaoId)
                 .orElseThrow(() -> new EntityNotFoundException("Simulacao nao encontrada."));
     }
 
     public List<Simulacao> listarPorCampanha(Long campanhaId) {
-        garantirCampanha(campanhaId);
-        return simulacaoDao.listarPorCampanha(campanhaId);
+        CampanhaTransmissao campanha = garantirCampanha(campanhaId);
+        return simulacaoDao.listarPorCampanha(campanha.getId());
     }
 
     public Simulacao simular(Long campanhaId) {
         CampanhaTransmissao campanha = garantirCampanha(campanhaId);
-        List<Regiao> regioes = campanhaDao.listarRegioes(campanhaId);
+        if ("CANCELADA".equals(campanha.getStatus()) || "FINALIZADA".equals(campanha.getStatus())) {
+            throw new BusinessException("Campanha cancelada ou finalizada nao pode gerar nova simulacao.");
+        }
+
+        List<Regiao> regioes = campanhaDao.listarRegioes(campanha.getId());
 
         if (regioes.isEmpty()) {
             throw new BusinessException("A campanha precisa ter ao menos uma regiao para ser simulada.");
@@ -63,7 +68,7 @@ public class SimulacaoBo {
         String recomendacao = gerarRecomendacao(viabilidade, campanha.getOrcamento(), custo, regioes.size());
 
         Simulacao simulacao = new Simulacao();
-        simulacao.setCampanhaId(campanhaId);
+        simulacao.setCampanhaId(campanha.getId());
         simulacao.setCustoEstimado(custo);
         simulacao.setAlcanceEstimado(alcance);
         simulacao.setQualidadeSinal(qualidadeSinal);
@@ -75,7 +80,8 @@ public class SimulacaoBo {
     }
 
     private CampanhaTransmissao garantirCampanha(Long campanhaId) {
-        return campanhaDao.buscarPorId(campanhaId)
+        Long id = ValidationUtils.requirePositiveId(campanhaId, "Id da campanha deve ser positivo.");
+        return campanhaDao.buscarPorId(id)
                 .orElseThrow(() -> new EntityNotFoundException("Campanha nao encontrada."));
     }
 
@@ -144,6 +150,9 @@ public class SimulacaoBo {
     }
 
     private String classificarViabilidade(BigDecimal orcamento, BigDecimal custo, BigDecimal qualidadeSinal) {
+        if (orcamento == null || custo == null || custo.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new BusinessException("Dados da campanha insuficientes para classificar a viabilidade.");
+        }
         BigDecimal coberturaOrcamento = orcamento.divide(custo, 4, RoundingMode.HALF_UP);
 
         if (coberturaOrcamento.compareTo(BigDecimal.ONE) >= 0

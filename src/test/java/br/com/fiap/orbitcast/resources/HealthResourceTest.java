@@ -1,4 +1,4 @@
-package br.com.fiap.orbitcast.controllers;
+package br.com.fiap.orbitcast.resources;
 
 import io.quarkus.test.junit.QuarkusTest;
 import org.junit.jupiter.api.Test;
@@ -7,7 +7,7 @@ import static io.restassured.RestAssured.given;
 import static org.hamcrest.CoreMatchers.is;
 
 @QuarkusTest
-class HealthControllerTest {
+class HealthResourceTest {
     @Test
     void testHelloEndpoint() {
         given()

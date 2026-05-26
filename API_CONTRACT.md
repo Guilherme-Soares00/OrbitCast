@@ -39,7 +39,7 @@ Exemplo para `POST /clientes`:
 ```json
 {
   "nome": "Instituto Conexao Remota",
-  "documento": "77.700.700/0001-70",
+  "documento": "77700700000113",
   "email": "contato@conexaoremota.org",
   "telefone": "(11) 4000-7000",
   "segmento": "Educacao",
@@ -109,6 +109,7 @@ POST /campanhas/{id}/regioes/{regiaoId}
 DELETE /campanhas/{id}/regioes/{regiaoId}
 GET /campanhas/{id}/simulacoes
 POST /campanhas/{id}/simulacoes
+GET /campanhas/{id}/planos-cobertura
 ```
 
 Valores aceitos em `qualidadeDesejada`:
@@ -177,6 +178,38 @@ Resposta de simulacao:
 }
 ```
 
+## Planos De Cobertura
+
+```text
+GET /planos-cobertura
+GET /planos-cobertura/{id}
+POST /planos-cobertura
+PUT /planos-cobertura/{id}
+DELETE /planos-cobertura/{id}
+GET /campanhas/{id}/planos-cobertura
+```
+
+Valores aceitos em `viabilidadeGeral`:
+
+```text
+BAIXA
+MEDIA
+ALTA
+```
+
+Exemplo para `POST /planos-cobertura`:
+
+```json
+{
+  "campanhaId": 1,
+  "nome": "Plano Educacional Reforcado",
+  "descricao": "Prioriza regioes com baixa conectividade e alto impacto educacional.",
+  "custoTotal": 430000.0,
+  "alcanceTotal": 535000,
+  "viabilidadeGeral": "ALTA"
+}
+```
+
 ## Simulacoes
 
 ```text
@@ -226,4 +259,3 @@ Formato de erro:
   "timestamp": "2026-05-26T15:00:00"
 }
 ```
-

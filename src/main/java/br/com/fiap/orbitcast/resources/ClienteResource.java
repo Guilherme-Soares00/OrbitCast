@@ -1,7 +1,7 @@
-package br.com.fiap.orbitcast.controllers;
+package br.com.fiap.orbitcast.resources;
 
-import br.com.fiap.orbitcast.bo.CanalBo;
-import br.com.fiap.orbitcast.entities.Canal;
+import br.com.fiap.orbitcast.bo.ClienteBo;
+import br.com.fiap.orbitcast.entities.Cliente;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
@@ -16,43 +16,43 @@ import jakarta.ws.rs.core.Response;
 
 import java.net.URI;
 
-@Path("/canais")
+@Path("/clientes")
 @Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
-public class CanalController {
+public class ClienteResource {
 
     @Inject
-    CanalBo canalBo;
+    ClienteBo clienteBo;
 
     @GET
     public Response listar() {
-        return Response.ok(canalBo.listar()).build();
+        return Response.ok(clienteBo.listar()).build();
     }
 
     @GET
     @Path("/{id}")
     public Response buscarPorId(@PathParam("id") Long id) {
-        return Response.ok(canalBo.buscarPorId(id)).build();
+        return Response.ok(clienteBo.buscarPorId(id)).build();
     }
 
     @POST
-    public Response cadastrar(Canal canal) {
-        Canal criado = canalBo.cadastrar(canal);
-        return Response.created(URI.create("/canais/" + criado.getId()))
+    public Response cadastrar(Cliente cliente) {
+        Cliente criado = clienteBo.cadastrar(cliente);
+        return Response.created(URI.create("/clientes/" + criado.getId()))
                 .entity(criado)
                 .build();
     }
 
     @PUT
     @Path("/{id}")
-    public Response atualizar(@PathParam("id") Long id, Canal canal) {
-        return Response.ok(canalBo.atualizar(id, canal)).build();
+    public Response atualizar(@PathParam("id") Long id, Cliente cliente) {
+        return Response.ok(clienteBo.atualizar(id, cliente)).build();
     }
 
     @DELETE
     @Path("/{id}")
     public Response remover(@PathParam("id") Long id) {
-        canalBo.remover(id);
+        clienteBo.remover(id);
         return Response.noContent().build();
     }
 }

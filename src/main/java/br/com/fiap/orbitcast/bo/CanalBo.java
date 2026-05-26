@@ -1,8 +1,10 @@
 package br.com.fiap.orbitcast.bo;
 
 import br.com.fiap.orbitcast.dao.CanalDao;
+import br.com.fiap.orbitcast.dao.CampanhaTransmissaoDao;
 import br.com.fiap.orbitcast.dao.ClienteDao;
 import br.com.fiap.orbitcast.entities.Canal;
+import br.com.fiap.orbitcast.entities.Cliente;
 import br.com.fiap.orbitcast.exceptions.BusinessException;
 import br.com.fiap.orbitcast.exceptions.EntityNotFoundException;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -19,53 +21,66 @@ public class CanalBo {
     @Inject
     ClienteDao clienteDao;
 
+    @Inject
+    CampanhaTransmissaoDao campanhaDao;
+
     public List<Canal> listar() {
         return canalDao.listar();
     }
 
     public Canal buscarPorId(Long id) {
-        return canalDao.buscarPorId(id)
+        Long canalId = ValidationUtils.requirePositiveId(id, "Id do canal deve ser positivo.");
+        return canalDao.buscarPorId(canalId)
                 .orElseThrow(() -> new EntityNotFoundException("Canal nao encontrado."));
     }
 
     public Canal cadastrar(Canal canal) {
-        validar(canal);
+        validar(canal, null);
         return canalDao.inserir(canal);
     }
 
     public Canal atualizar(Long id, Canal canal) {
-        validar(canal);
-        if (!canalDao.atualizar(id, canal)) {
-            throw new EntityNotFoundException("Canal nao encontrado.");
+        Long canalId = ValidationUtils.requirePositiveId(id, "Id do canal deve ser positivo.");
+        Canal existente = canalDao.buscarPorId(canalId)
+                .orElseThrow(() -> new EntityNotFoundException("Canal nao encontrado."));
+        validar(canal, canalId);
+        if (campanhaDao.existePorCanal(canalId) && !existente.getClienteId().equals(canal.getClienteId())) {
+            throw new BusinessException("Canal com campanhas vinculadas nao pode trocar de cliente.");
         }
-        return buscarPorId(id);
+        canalDao.atualizar(canalId, canal);
+        return buscarPorId(canalId);
     }
 
     public void remover(Long id) {
-        if (!canalDao.remover(id)) {
+        Long canalId = ValidationUtils.requirePositiveId(id, "Id do canal deve ser positivo.");
+        if (!canalDao.existe(canalId)) {
             throw new EntityNotFoundException("Canal nao encontrado.");
         }
+        if (campanhaDao.existePorCanal(canalId)) {
+            throw new BusinessException("Canal possui campanhas vinculadas.");
+        }
+        canalDao.remover(canalId);
     }
 
-    private void validar(Canal canal) {
+    private void validar(Canal canal, Long idIgnorado) {
         if (canal == null) {
             throw new BusinessException("Canal deve ser informado.");
         }
-        if (canal.getClienteId() == null || !clienteDao.existe(canal.getClienteId())) {
-            throw new BusinessException("Cliente informado para o canal nao existe.");
+        Long clienteId = ValidationUtils.requirePositiveId(canal.getClienteId(), "Id do cliente deve ser positivo.");
+        Cliente cliente = clienteDao.buscarPorId(clienteId)
+                .orElseThrow(() -> new BusinessException("Cliente informado para o canal nao existe."));
+        if (!Boolean.TRUE.equals(cliente.getAtivo())) {
+            throw new BusinessException("Cliente informado para o canal deve estar ativo.");
         }
-        if (isBlank(canal.getNome())) {
-            throw new BusinessException("Nome do canal e obrigatorio.");
-        }
-        if (isBlank(canal.getTipoConteudo())) {
-            throw new BusinessException("Tipo de conteudo e obrigatorio.");
-        }
-        if (isBlank(canal.getPublicoAlvo())) {
-            throw new BusinessException("Publico-alvo e obrigatorio.");
-        }
-    }
+        canal.setClienteId(clienteId);
+        canal.setNome(ValidationUtils.requireText(canal.getNome(), "Nome do canal", 120));
+        canal.setTipoConteudo(ValidationUtils.requireText(canal.getTipoConteudo(), "Tipo de conteudo", 80));
+        canal.setPublicoAlvo(ValidationUtils.requireText(canal.getPublicoAlvo(), "Publico-alvo", 120));
+        canal.setClassificacaoIndicativa(ValidationUtils.optionalText(canal.getClassificacaoIndicativa(), "Classificacao indicativa", 20));
+        canal.setAtivo(canal.getAtivo() == null || canal.getAtivo());
 
-    private boolean isBlank(String value) {
-        return value == null || value.isBlank();
+        if (canalDao.nomeExisteParaCliente(canal.getNome(), canal.getClienteId(), idIgnorado)) {
+            throw new BusinessException("Cliente ja possui um canal com este nome.");
+        }
     }
 }

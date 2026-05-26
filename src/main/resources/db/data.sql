@@ -1,15 +1,15 @@
 INSERT INTO clientes (id, nome, documento, email, telefone, segmento, data_cadastro, ativo) VALUES
-(1, 'Instituto Saber Amazonia', '12.100.100/0001-10', 'contato@saberamazonia.org', '(92) 4000-1000', 'Educacao', CURRENT_TIMESTAMP, TRUE);
+(1, 'Instituto Saber Amazonia', '12100100000179', 'contato@saberamazonia.org', '9240001000', 'Educacao', CURRENT_TIMESTAMP, TRUE);
 INSERT INTO clientes (id, nome, documento, email, telefone, segmento, data_cadastro, ativo) VALUES
-(2, 'Canal Norte Vivo', '22.200.200/0001-20', 'operacoes@nortevivo.tv', '(91) 4000-2000', 'TV Regional', CURRENT_TIMESTAMP, TRUE);
+(2, 'Canal Norte Vivo', '22200200000120', 'operacoes@nortevivo.tv', '9140002000', 'TV Regional', CURRENT_TIMESTAMP, TRUE);
 INSERT INTO clientes (id, nome, documento, email, telefone, segmento, data_cadastro, ativo) VALUES
-(3, 'Festival Brasil Interior', '33.300.300/0001-30', 'producao@brasilinterior.com', '(61) 4000-3000', 'Eventos', CURRENT_TIMESTAMP, TRUE);
+(3, 'Festival Brasil Interior', '33300300000145', 'producao@brasilinterior.com', '6140003000', 'Eventos', CURRENT_TIMESTAMP, TRUE);
 INSERT INTO clientes (id, nome, documento, email, telefone, segmento, data_cadastro, ativo) VALUES
-(4, 'Defesa Civil Integrada', '44.400.400/0001-40', 'comunicacao@defesaintegrada.gov', '(11) 4000-4000', 'Governo', CURRENT_TIMESTAMP, TRUE);
+(4, 'Defesa Civil Integrada', '44400400000160', 'comunicacao@defesaintegrada.gov', '1140004000', 'Governo', CURRENT_TIMESTAMP, TRUE);
 INSERT INTO clientes (id, nome, documento, email, telefone, segmento, data_cadastro, ativo) VALUES
-(5, 'Produtora Horizonte', '55.500.500/0001-50', 'atendimento@produtorahorizonte.com', '(21) 4000-5000', 'Produtora', CURRENT_TIMESTAMP, TRUE);
+(5, 'Produtora Horizonte', '55500500000184', 'atendimento@produtorahorizonte.com', '2140005000', 'Produtora', CURRENT_TIMESTAMP, TRUE);
 INSERT INTO clientes (id, nome, documento, email, telefone, segmento, data_cadastro, ativo) VALUES
-(6, 'Rede Saude Remota', '66.600.600/0001-60', 'projetos@sauderemota.org', '(85) 4000-6000', 'Saude', CURRENT_TIMESTAMP, TRUE);
+(6, 'Rede Saude Remota', '66600600000107', 'projetos@sauderemota.org', '8540006000', 'Saude', CURRENT_TIMESTAMP, TRUE);
 
 INSERT INTO canais (id, cliente_id, nome, tipo_conteudo, publico_alvo, classificacao_indicativa, ativo) VALUES
 (1, 1, 'Aulas Sem Fronteiras', 'Educacional', 'Estudantes do ensino medio', 'Livre', TRUE);

@@ -1,6 +1,7 @@
-package br.com.fiap.orbitcast.controllers;
+package br.com.fiap.orbitcast.resources;
 
 import br.com.fiap.orbitcast.bo.CampanhaTransmissaoBo;
+import br.com.fiap.orbitcast.bo.PlanoCoberturaBo;
 import br.com.fiap.orbitcast.bo.SimulacaoBo;
 import br.com.fiap.orbitcast.entities.CampanhaRegiao;
 import br.com.fiap.orbitcast.entities.CampanhaTransmissao;
@@ -22,13 +23,16 @@ import java.net.URI;
 @Path("/campanhas")
 @Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
-public class CampanhaTransmissaoController {
+public class CampanhaTransmissaoResource {
 
     @Inject
     CampanhaTransmissaoBo campanhaBo;
 
     @Inject
     SimulacaoBo simulacaoBo;
+
+    @Inject
+    PlanoCoberturaBo planoBo;
 
     @GET
     public Response listar() {
@@ -88,6 +92,12 @@ public class CampanhaTransmissaoController {
     @Path("/{id}/simulacoes")
     public Response listarSimulacoes(@PathParam("id") Long id) {
         return Response.ok(simulacaoBo.listarPorCampanha(id)).build();
+    }
+
+    @GET
+    @Path("/{id}/planos-cobertura")
+    public Response listarPlanosCobertura(@PathParam("id") Long id) {
+        return Response.ok(planoBo.listarPorCampanha(id)).build();
     }
 
     @POST

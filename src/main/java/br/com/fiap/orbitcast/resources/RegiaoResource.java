@@ -1,7 +1,7 @@
-package br.com.fiap.orbitcast.controllers;
+package br.com.fiap.orbitcast.resources;
 
-import br.com.fiap.orbitcast.bo.ClienteBo;
-import br.com.fiap.orbitcast.entities.Cliente;
+import br.com.fiap.orbitcast.bo.RegiaoBo;
+import br.com.fiap.orbitcast.entities.Regiao;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
@@ -16,43 +16,43 @@ import jakarta.ws.rs.core.Response;
 
 import java.net.URI;
 
-@Path("/clientes")
+@Path("/regioes")
 @Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
-public class ClienteController {
+public class RegiaoResource {
 
     @Inject
-    ClienteBo clienteBo;
+    RegiaoBo regiaoBo;
 
     @GET
     public Response listar() {
-        return Response.ok(clienteBo.listar()).build();
+        return Response.ok(regiaoBo.listar()).build();
     }
 
     @GET
     @Path("/{id}")
     public Response buscarPorId(@PathParam("id") Long id) {
-        return Response.ok(clienteBo.buscarPorId(id)).build();
+        return Response.ok(regiaoBo.buscarPorId(id)).build();
     }
 
     @POST
-    public Response cadastrar(Cliente cliente) {
-        Cliente criado = clienteBo.cadastrar(cliente);
-        return Response.created(URI.create("/clientes/" + criado.getId()))
-                .entity(criado)
+    public Response cadastrar(Regiao regiao) {
+        Regiao criada = regiaoBo.cadastrar(regiao);
+        return Response.created(URI.create("/regioes/" + criada.getId()))
+                .entity(criada)
                 .build();
     }
 
     @PUT
     @Path("/{id}")
-    public Response atualizar(@PathParam("id") Long id, Cliente cliente) {
-        return Response.ok(clienteBo.atualizar(id, cliente)).build();
+    public Response atualizar(@PathParam("id") Long id, Regiao regiao) {
+        return Response.ok(regiaoBo.atualizar(id, regiao)).build();
     }
 
     @DELETE
     @Path("/{id}")
     public Response remover(@PathParam("id") Long id) {
-        clienteBo.remover(id);
+        regiaoBo.remover(id);
         return Response.noContent().build();
     }
 }

@@ -6,6 +6,8 @@ import br.com.fiap.orbitcast.dao.ClienteDao;
 import br.com.fiap.orbitcast.dao.RegiaoDao;
 import br.com.fiap.orbitcast.entities.CampanhaRegiao;
 import br.com.fiap.orbitcast.entities.CampanhaTransmissao;
+import br.com.fiap.orbitcast.entities.Canal;
+import br.com.fiap.orbitcast.entities.Cliente;
 import br.com.fiap.orbitcast.entities.Regiao;
 import br.com.fiap.orbitcast.exceptions.BusinessException;
 import br.com.fiap.orbitcast.exceptions.EntityNotFoundException;
@@ -13,6 +15,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
 import java.math.BigDecimal;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Set;
 
@@ -39,55 +42,67 @@ public class CampanhaTransmissaoBo {
     }
 
     public CampanhaTransmissao buscarPorId(Long id) {
-        return campanhaDao.buscarPorId(id)
+        Long campanhaId = ValidationUtils.requirePositiveId(id, "Id da campanha deve ser positivo.");
+        return campanhaDao.buscarPorId(campanhaId)
                 .orElseThrow(() -> new EntityNotFoundException("Campanha nao encontrada."));
     }
 
     public List<Regiao> listarRegioes(Long campanhaId) {
-        garantirCampanha(campanhaId);
-        return campanhaDao.listarRegioes(campanhaId);
+        CampanhaTransmissao campanha = garantirCampanha(campanhaId);
+        return campanhaDao.listarRegioes(campanha.getId());
     }
 
     public CampanhaTransmissao cadastrar(CampanhaTransmissao campanha) {
         validar(campanha);
+        if (campanhaEncerrada(campanha.getStatus())) {
+            throw new BusinessException("Campanha nova nao pode iniciar cancelada ou finalizada.");
+        }
         return campanhaDao.inserir(campanha);
     }
 
     public CampanhaTransmissao atualizar(Long id, CampanhaTransmissao campanha) {
+        Long campanhaId = ValidationUtils.requirePositiveId(id, "Id da campanha deve ser positivo.");
+        CampanhaTransmissao existente = campanhaDao.buscarPorId(campanhaId)
+                .orElseThrow(() -> new EntityNotFoundException("Campanha nao encontrada."));
+        garantirCampanhaEditavel(existente);
         validar(campanha);
-        if (!campanhaDao.atualizar(id, campanha)) {
-            throw new EntityNotFoundException("Campanha nao encontrada.");
+        if ("APROVADA".equals(campanha.getStatus()) && !campanhaDao.possuiRegioes(campanhaId)) {
+            throw new BusinessException("Campanha aprovada precisa ter ao menos uma regiao associada.");
         }
-        return buscarPorId(id);
+        campanhaDao.atualizar(campanhaId, campanha);
+        return buscarPorId(campanhaId);
     }
 
     public void remover(Long id) {
-        if (!campanhaDao.remover(id)) {
+        Long campanhaId = ValidationUtils.requirePositiveId(id, "Id da campanha deve ser positivo.");
+        if (!campanhaDao.remover(campanhaId)) {
             throw new EntityNotFoundException("Campanha nao encontrada.");
         }
     }
 
     public void adicionarRegiao(Long campanhaId, Long regiaoId, CampanhaRegiao request) {
-        garantirCampanha(campanhaId);
-        if (!regiaoDao.existe(regiaoId)) {
+        CampanhaTransmissao campanha = garantirCampanha(campanhaId);
+        garantirCampanhaEditavel(campanha);
+        Long regiao = ValidationUtils.requirePositiveId(regiaoId, "Id da regiao deve ser positivo.");
+        if (!regiaoDao.existe(regiao)) {
             throw new BusinessException("Regiao informada nao existe.");
         }
-        if (campanhaDao.campanhaPossuiRegiao(campanhaId, regiaoId)) {
+        if (campanhaDao.campanhaPossuiRegiao(campanha.getId(), regiao)) {
             throw new BusinessException("Regiao ja esta associada a campanha.");
         }
 
         int prioridade = request == null || request.getPrioridade() == null ? 3 : request.getPrioridade();
-        if (prioridade < 1 || prioridade > 5) {
-            throw new BusinessException("Prioridade da regiao na campanha deve ficar entre 1 e 5.");
-        }
+        prioridade = ValidationUtils.requireBetween(prioridade, "Prioridade da regiao na campanha", 1, 5);
 
-        String observacao = request == null ? null : request.getObservacao();
-        campanhaDao.adicionarRegiao(new CampanhaRegiao(campanhaId, regiaoId, prioridade, observacao));
+        String observacao = request == null ? null : ValidationUtils.optionalText(request.getObservacao(), "Observacao", 300);
+        campanhaDao.adicionarRegiao(new CampanhaRegiao(campanha.getId(), regiao, prioridade, observacao));
     }
 
     public void removerRegiao(Long campanhaId, Long regiaoId) {
-        garantirCampanha(campanhaId);
-        if (!campanhaDao.removerRegiao(campanhaId, regiaoId)) {
+        CampanhaTransmissao campanha = garantirCampanha(campanhaId);
+        garantirCampanhaEditavel(campanha);
+        Long regiao = ValidationUtils.requirePositiveId(regiaoId, "Id da regiao deve ser positivo.");
+        if (!campanhaDao.removerRegiao(campanha.getId(), regiao)) {
             throw new EntityNotFoundException("Associacao entre campanha e regiao nao encontrada.");
         }
     }
@@ -96,15 +111,27 @@ public class CampanhaTransmissaoBo {
         if (campanha == null) {
             throw new BusinessException("Campanha deve ser informada.");
         }
-        if (campanha.getClienteId() == null || !clienteDao.existe(campanha.getClienteId())) {
-            throw new BusinessException("Cliente informado para a campanha nao existe.");
+        Long clienteId = ValidationUtils.requirePositiveId(campanha.getClienteId(), "Id do cliente deve ser positivo.");
+        Cliente cliente = clienteDao.buscarPorId(clienteId)
+                .orElseThrow(() -> new BusinessException("Cliente informado para a campanha nao existe."));
+        if (!Boolean.TRUE.equals(cliente.getAtivo())) {
+            throw new BusinessException("Cliente informado para a campanha deve estar ativo.");
         }
-        if (campanha.getCanalId() == null || !canalDao.existe(campanha.getCanalId())) {
-            throw new BusinessException("Canal informado para a campanha nao existe.");
+
+        Long canalId = ValidationUtils.requirePositiveId(campanha.getCanalId(), "Id do canal deve ser positivo.");
+        Canal canal = canalDao.buscarPorId(canalId)
+                .orElseThrow(() -> new BusinessException("Canal informado para a campanha nao existe."));
+        if (!Boolean.TRUE.equals(canal.getAtivo())) {
+            throw new BusinessException("Canal informado para a campanha deve estar ativo.");
         }
-        if (isBlank(campanha.getNome())) {
-            throw new BusinessException("Nome da campanha e obrigatorio.");
+        if (!canal.getClienteId().equals(clienteId)) {
+            throw new BusinessException("Canal informado nao pertence ao cliente da campanha.");
         }
+
+        campanha.setClienteId(clienteId);
+        campanha.setCanalId(canalId);
+        campanha.setNome(ValidationUtils.requireText(campanha.getNome(), "Nome da campanha", 140));
+        campanha.setDescricao(ValidationUtils.optionalText(campanha.getDescricao(), "Descricao", 500));
         if (campanha.getDataInicio() == null || campanha.getDataFim() == null) {
             throw new BusinessException("Datas de inicio e fim sao obrigatorias.");
         }
@@ -114,6 +141,10 @@ public class CampanhaTransmissaoBo {
         if (campanha.getDuracaoHoras() == null || campanha.getDuracaoHoras() <= 0) {
             throw new BusinessException("Duracao em horas deve ser maior que zero.");
         }
+        long horasDisponiveis = (ChronoUnit.DAYS.between(campanha.getDataInicio(), campanha.getDataFim()) + 1) * 24;
+        if (campanha.getDuracaoHoras() > horasDisponiveis) {
+            throw new BusinessException("Duracao em horas nao pode exceder o periodo da campanha.");
+        }
         campanha.setQualidadeDesejada(normalizarQualidade(campanha.getQualidadeDesejada()));
         campanha.setStatus(normalizarStatus(campanha.getStatus()));
         if (campanha.getOrcamento() == null || campanha.getOrcamento().compareTo(BigDecimal.ZERO) < 0) {
@@ -121,17 +152,24 @@ public class CampanhaTransmissaoBo {
         }
     }
 
-    private void garantirCampanha(Long campanhaId) {
-        if (campanhaId == null || !campanhaDao.existe(campanhaId)) {
-            throw new EntityNotFoundException("Campanha nao encontrada.");
+    private CampanhaTransmissao garantirCampanha(Long campanhaId) {
+        Long id = ValidationUtils.requirePositiveId(campanhaId, "Id da campanha deve ser positivo.");
+        return campanhaDao.buscarPorId(id)
+                .orElseThrow(() -> new EntityNotFoundException("Campanha nao encontrada."));
+    }
+
+    private void garantirCampanhaEditavel(CampanhaTransmissao campanha) {
+        if (campanhaEncerrada(campanha.getStatus())) {
+            throw new BusinessException("Campanha cancelada ou finalizada nao pode ser alterada.");
         }
     }
 
+    private boolean campanhaEncerrada(String status) {
+        return "CANCELADA".equals(status) || "FINALIZADA".equals(status);
+    }
+
     private String normalizarQualidade(String qualidade) {
-        if (isBlank(qualidade)) {
-            throw new BusinessException("Qualidade desejada e obrigatoria.");
-        }
-        String valor = qualidade.strip().toUpperCase();
+        String valor = ValidationUtils.requireText(qualidade, "Qualidade desejada", 20).toUpperCase();
         if (!QUALIDADES.contains(valor)) {
             throw new BusinessException("Qualidade desejada deve ser SD, HD, FULL_HD ou 4K.");
         }
@@ -139,17 +177,14 @@ public class CampanhaTransmissaoBo {
     }
 
     private String normalizarStatus(String status) {
-        if (isBlank(status)) {
+        String valorInformado = ValidationUtils.normalizeText(status);
+        if (valorInformado == null) {
             return "PLANEJADA";
         }
-        String valor = status.strip().toUpperCase();
+        String valor = valorInformado.toUpperCase();
         if (!STATUS.contains(valor)) {
             throw new BusinessException("Status da campanha invalido.");
         }
         return valor;
-    }
-
-    private boolean isBlank(String value) {
-        return value == null || value.isBlank();
     }
 }

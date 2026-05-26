@@ -1,4 +1,4 @@
-package br.com.fiap.orbitcast.controllers;
+package br.com.fiap.orbitcast.resources;
 
 import br.com.fiap.orbitcast.bo.DashboardBo;
 import jakarta.inject.Inject;
@@ -10,7 +10,7 @@ import jakarta.ws.rs.core.Response;
 
 @Path("/dashboard")
 @Produces(MediaType.APPLICATION_JSON)
-public class DashboardController {
+public class DashboardResource {
 
     @Inject
     DashboardBo dashboardBo;

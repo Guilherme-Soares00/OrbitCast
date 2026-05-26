@@ -20,45 +20,53 @@ public class ClienteBo {
     }
 
     public Cliente buscarPorId(Long id) {
-        return clienteDao.buscarPorId(id)
+        Long clienteId = ValidationUtils.requirePositiveId(id, "Id do cliente deve ser positivo.");
+        return clienteDao.buscarPorId(clienteId)
                 .orElseThrow(() -> new EntityNotFoundException("Cliente nao encontrado."));
     }
 
     public Cliente cadastrar(Cliente cliente) {
-        validar(cliente);
+        validar(cliente, null);
         return clienteDao.inserir(cliente);
     }
 
     public Cliente atualizar(Long id, Cliente cliente) {
-        validar(cliente);
-        if (!clienteDao.atualizar(id, cliente)) {
+        Long clienteId = ValidationUtils.requirePositiveId(id, "Id do cliente deve ser positivo.");
+        if (!clienteDao.existe(clienteId)) {
             throw new EntityNotFoundException("Cliente nao encontrado.");
         }
-        return buscarPorId(id);
+        validar(cliente, clienteId);
+        clienteDao.atualizar(clienteId, cliente);
+        return buscarPorId(clienteId);
     }
 
     public void remover(Long id) {
-        if (!clienteDao.remover(id)) {
+        Long clienteId = ValidationUtils.requirePositiveId(id, "Id do cliente deve ser positivo.");
+        if (!clienteDao.existe(clienteId)) {
             throw new EntityNotFoundException("Cliente nao encontrado.");
         }
+        if (clienteDao.possuiCanais(clienteId) || clienteDao.possuiCampanhas(clienteId)) {
+            throw new BusinessException("Cliente possui canais ou campanhas vinculadas.");
+        }
+        clienteDao.remover(clienteId);
     }
 
-    private void validar(Cliente cliente) {
+    private void validar(Cliente cliente, Long idIgnorado) {
         if (cliente == null) {
             throw new BusinessException("Cliente deve ser informado.");
         }
-        if (isBlank(cliente.getNome())) {
-            throw new BusinessException("Nome do cliente e obrigatorio.");
-        }
-        if (isBlank(cliente.getEmail()) || !cliente.getEmail().contains("@")) {
-            throw new BusinessException("Email do cliente e obrigatorio e deve ser valido.");
-        }
-        if (isBlank(cliente.getSegmento())) {
-            throw new BusinessException("Segmento do cliente e obrigatorio.");
-        }
-    }
+        cliente.setNome(ValidationUtils.requireText(cliente.getNome(), "Nome do cliente", 120));
+        cliente.setDocumento(ValidationUtils.optionalCpfCnpj(cliente.getDocumento()));
+        cliente.setEmail(ValidationUtils.requireEmail(cliente.getEmail()));
+        cliente.setTelefone(ValidationUtils.optionalPhone(cliente.getTelefone()));
+        cliente.setSegmento(ValidationUtils.requireText(cliente.getSegmento(), "Segmento do cliente", 80));
+        cliente.setAtivo(cliente.getAtivo() == null || cliente.getAtivo());
 
-    private boolean isBlank(String value) {
-        return value == null || value.isBlank();
+        if (cliente.getDocumento() != null && clienteDao.documentoExiste(cliente.getDocumento(), idIgnorado)) {
+            throw new BusinessException("Documento ja esta cadastrado para outro cliente.");
+        }
+        if (clienteDao.emailExiste(cliente.getEmail(), idIgnorado)) {
+            throw new BusinessException("Email ja esta cadastrado para outro cliente.");
+        }
     }
 }
