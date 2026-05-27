@@ -37,23 +37,23 @@ public class DashboardDao {
     }
 
     private int contar(Connection connection, String tabela) throws Exception {
-        String sql = "SELECT COUNT(*) total FROM " + tabela;
+        String sql = "SELECT COUNT(*) FROM " + tabela;
 
         try (PreparedStatement statement = connection.prepareStatement(sql);
              ResultSet resultSet = statement.executeQuery()) {
             resultSet.next();
-            return resultSet.getInt("total");
+            return resultSet.getInt(1);
         }
     }
 
     private Map<String, Integer> agrupar(Connection connection, String tabela, String coluna) throws Exception {
-        String sql = "SELECT " + coluna + " nome, COUNT(*) total FROM " + tabela + " GROUP BY " + coluna + " ORDER BY " + coluna;
+        String sql = "SELECT " + coluna + ", COUNT(*) FROM " + tabela + " GROUP BY " + coluna + " ORDER BY " + coluna;
         Map<String, Integer> dados = new LinkedHashMap<>();
 
         try (PreparedStatement statement = connection.prepareStatement(sql);
              ResultSet resultSet = statement.executeQuery()) {
             while (resultSet.next()) {
-                dados.put(resultSet.getString("nome"), resultSet.getInt("total"));
+                dados.put(resultSet.getString(1), resultSet.getInt(2));
             }
         }
 
@@ -62,18 +62,18 @@ public class DashboardDao {
 
     private void preencherMetricasSimulacao(Connection connection, DashboardResumo resumo) throws Exception {
         String sql = """
-                SELECT COALESCE(SUM(alcance_estimado), 0) alcance_total,
-                       COALESCE(AVG(custo_estimado), 0) custo_medio,
-                       COALESCE(AVG(qualidade_sinal), 0) qualidade_media
+                SELECT SUM(alcance_estimado),
+                       AVG(custo_estimado),
+                       AVG(qualidade_sinal)
                   FROM simulacoes
                 """;
 
         try (PreparedStatement statement = connection.prepareStatement(sql);
              ResultSet resultSet = statement.executeQuery()) {
             resultSet.next();
-            resumo.setAlcanceEstimadoTotal(resultSet.getInt("alcance_total"));
-            resumo.setCustoMedioSimulacoes(resultSet.getBigDecimal("custo_medio"));
-            resumo.setQualidadeMediaSinal(resultSet.getBigDecimal("qualidade_media"));
+            resumo.setAlcanceEstimadoTotal(resultSet.getInt(1));
+            resumo.setCustoMedioSimulacoes(resultSet.getBigDecimal(2));
+            resumo.setQualidadeMediaSinal(resultSet.getBigDecimal(3));
         }
 
         if (resumo.getCustoMedioSimulacoes() == null) {
