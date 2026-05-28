@@ -6,11 +6,27 @@ Base local:
 http://localhost:8080
 ```
 
-Formato padrao:
+Base de produção:
+
+```text
+https://orbitcast.onrender.com
+```
+
+Formato padrão:
 
 ```text
 Content-Type: application/json
 ```
+
+## Avisos Para Integração Com O Front-End
+
+- A API não usa prefixo `/api`. Use `/clientes`, `/canais`, `/campanhas` e demais rotas diretamente na base da API.
+- A rota `/health` retorna `text/plain`, não JSON. Se o front chamar essa rota, use `Accept: */*` ou `Accept: text/plain`.
+- As demais rotas principais retornam JSON e podem usar `Accept: application/json`.
+- Respostas `DELETE` com status `204` não possuem corpo. O front não deve tentar executar `response.json()` nessas respostas.
+- A rota `POST /campanhas/{id}/regioes/{regiaoId}` retorna status `201` sem corpo. O front deve validar pelo status.
+- O Render pode demorar ou falhar em uma primeira chamada depois de ficar inativo. Se acontecer erro isolado logo ao abrir o sistema, tente repetir a chamada.
+- O CORS já está habilitado para origens locais como `http://localhost:3000` e `http://localhost:5173`.
 
 ## Health
 
