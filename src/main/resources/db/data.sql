@@ -46,6 +46,22 @@ INSERT INTO regioes (id, nome, estado, pais, populacao_estimada, indice_conectiv
 (9, 'Baixo Sao Francisco', 'AL', 'Brasil', 210000, 44.70, -10.290000, -36.585000, 9200.00, 4);
 INSERT INTO regioes (id, nome, estado, pais, populacao_estimada, indice_conectividade, latitude, longitude, area_km2, prioridade_social) VALUES
 (10, 'Fronteira Oeste Gaucha', 'RS', 'Brasil', 190000, 61.50, -29.761000, -57.085000, 29000.00, 2);
+INSERT INTO regioes (id, nome, estado, pais, populacao_estimada, indice_conectividade, latitude, longitude, area_km2, prioridade_social) VALUES
+(11, 'Medio Xingu', 'PA', 'Brasil', 145000, 24.80, -3.204000, -52.206000, 42000.00, 5);
+INSERT INTO regioes (id, nome, estado, pais, populacao_estimada, indice_conectividade, latitude, longitude, area_km2, prioridade_social) VALUES
+(12, 'Baixada Maranhense', 'MA', 'Brasil', 310000, 39.60, -3.145000, -44.827000, 17000.00, 4);
+INSERT INTO regioes (id, nome, estado, pais, populacao_estimada, indice_conectividade, latitude, longitude, area_km2, prioridade_social) VALUES
+(13, 'Jalapao', 'TO', 'Brasil', 36000, 26.40, -10.545000, -46.566000, 34000.00, 5);
+INSERT INTO regioes (id, nome, estado, pais, populacao_estimada, indice_conectividade, latitude, longitude, area_km2, prioridade_social) VALUES
+(14, 'Pantanal Sul', 'MS', 'Brasil', 95000, 36.70, -19.008000, -57.650000, 54000.00, 4);
+INSERT INTO regioes (id, nome, estado, pais, populacao_estimada, indice_conectividade, latitude, longitude, area_km2, prioridade_social) VALUES
+(15, 'Vale do Jequitinhonha', 'MG', 'Brasil', 680000, 49.20, -16.728000, -42.069000, 50000.00, 4);
+INSERT INTO regioes (id, nome, estado, pais, populacao_estimada, indice_conectividade, latitude, longitude, area_km2, prioridade_social) VALUES
+(16, 'Sertao do Araripe', 'PE', 'Brasil', 520000, 43.10, -7.586000, -40.497000, 18000.00, 4);
+INSERT INTO regioes (id, nome, estado, pais, populacao_estimada, indice_conectividade, latitude, longitude, area_km2, prioridade_social) VALUES
+(17, 'Serra da Capivara', 'PI', 'Brasil', 125000, 37.80, -8.833000, -42.552000, 13000.00, 4);
+INSERT INTO regioes (id, nome, estado, pais, populacao_estimada, indice_conectividade, latitude, longitude, area_km2, prioridade_social) VALUES
+(18, 'Litoral Norte Amapaense', 'AP', 'Brasil', 72000, 31.50, 2.051000, -50.795000, 24000.00, 5);
 
 INSERT INTO campanhas_transmissao (id, cliente_id, canal_id, nome, descricao, data_inicio, data_fim, duracao_horas, qualidade_desejada, orcamento, status) VALUES
 (1, 1, 1, 'Aulas via Satelite Amazonia', 'Transmissao de aulas para polos educacionais isolados.', DATE '2026-06-15', DATE '2026-06-20', 40, 'HD', 450000.00, 'EM_ANALISE');
@@ -104,7 +120,7 @@ INSERT INTO planos_cobertura (id, campanha_id, nome, descricao, custo_total, alc
 
 ALTER TABLE clientes ALTER COLUMN id RESTART WITH 7;
 ALTER TABLE canais ALTER COLUMN id RESTART WITH 8;
-ALTER TABLE regioes ALTER COLUMN id RESTART WITH 11;
+ALTER TABLE regioes ALTER COLUMN id RESTART WITH 19;
 ALTER TABLE campanhas_transmissao ALTER COLUMN id RESTART WITH 7;
 ALTER TABLE simulacoes ALTER COLUMN id RESTART WITH 9;
 ALTER TABLE planos_cobertura ALTER COLUMN id RESTART WITH 5;
